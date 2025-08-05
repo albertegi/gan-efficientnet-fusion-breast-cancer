@@ -66,6 +66,35 @@ def get_data_generators(seed=42):
         validation_split=0.5
     )
 
+    train_generator = train_datagen.flow_from_directory(
+        TRAIN_DIR,
+        target_size=(224, 224),
+        batch_size=32,
+        class_mode='binary',
+        subset='training',
+        seed=seed
+    )
+
+    validation_generator = val_datagen.flow_from_directory(
+        VAL_DIR,
+        target_size=(224, 224),
+        batch_size=32,
+        class_mode='binary',
+        subset='training',
+        seed=seed
+    )
+
+    test_generator = val_datagen.flow_from_directory(
+        VAL_DIR,
+        target_size=(224, 224),
+        batch_size=32,
+        class_mode='binary',
+        subset='validation',
+        shuffle=False,
+        seed=seed
+    )
+    return train_generator, validation_generator, test_generator
+
 
 
 
