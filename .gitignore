@@ -32,6 +32,11 @@ MANIFEST
 *.manifest
 *.spec
 
+# Project ignores
+*.h5
+*.zip
+/data/*
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

@@ -26,7 +26,15 @@ def set_seeds(seed=42):
 
 # Get base directory from environment variable or defaults
 BASE_DIR = os.environ.get("BREAST_CANCER_DATA", os.path.join(os.getcwd(), "data/input/BreakHis_v1/histology_slides/breast"))
-TRAIN_DIR = os.path.join(BASE_DIR, 'train')
+TRAIN_DIR = os.path.join(BASE_DIR, 'train') # creates path to training data
 VAL_DIR = os.path.join(BASE_DIR, 'validation')
-CHECKPOINT_DIR = os.path.join(BASE_DIR, 'efficient_checkpoint')
-CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, 'best_model.h5')
+CHECKPOINT_DIR = os.path.join(BASE_DIR, 'efficient_checkpoints')
+CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, 'best_model.h5') # creates path to save the best model
+
+# Discover class names dynamically
+CLASSES = [d for d in os.listdir(TRAIN_DIR) if os.path.isdir(os.path.join(TRAIN_DIR, d))]
+
+
+
+
+
