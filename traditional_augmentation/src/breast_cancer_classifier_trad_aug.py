@@ -34,6 +34,20 @@ CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, 'best_model.h5') # creates path t
 # Discover class names dynamically
 CLASSES = [d for d in os.listdir(TRAIN_DIR) if os.path.isdir(os.path.join(TRAIN_DIR, d))]
 
+# Utility: get image extensions
+def get_image_extension(directory):
+    exts = set()
+    for cls in CLASSES:
+        files = glob.glob(os.path.join(directory, cls, '*'))
+        for f in files:
+            ext = os.path.splitext(f)[1].lower()
+            if ext: # if the file has an extension, add it to the exts set.
+                exts.add(ext)
+    return list(exts) # convert the set of extensions into to a list and return it.
+
+IMAGE_EXTS = get_image_extension(TRAIN_DIR)
+
+
 
 
 
