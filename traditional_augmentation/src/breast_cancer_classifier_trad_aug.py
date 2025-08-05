@@ -47,6 +47,25 @@ def get_image_extension(directory):
 
 IMAGE_EXTS = get_image_extension(TRAIN_DIR)
 
+# Data generators
+
+def get_data_generators(seed=42):
+    train_datagen = ImageDataGenerator(
+        rescale=1./255,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        rotation_range=30,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        brightness_range=[0.9, 1.1],
+    )
+
+    val_datagen = ImageDataGenerator(
+        rescale=1./255,
+        validation_split=0.5
+    )
+
 
 
 
