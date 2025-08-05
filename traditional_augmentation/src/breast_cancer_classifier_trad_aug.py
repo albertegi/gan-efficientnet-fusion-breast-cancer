@@ -17,3 +17,9 @@ import glob
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Set seeds
+def set_seeds(seed=42):
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+    random.seed(seed)
