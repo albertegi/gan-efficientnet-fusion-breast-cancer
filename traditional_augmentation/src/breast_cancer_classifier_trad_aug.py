@@ -95,6 +95,16 @@ def get_data_generators(seed=42):
     )
     return train_generator, validation_generator, test_generator
 
+# Model Definition
+def build_model(dropout_rate=0.4):
+    model = Sequential([
+        EfficientNetB5(input_shape=(224, 224, 3), include_top=False, weights='imagenet'),
+        GlobalAveragePooling2D,
+        Dropout(dropout_rate),
+        Dense(1, activation='sigmoid', kernel_regularizer=tf.keras.regularizers.l2(0.01))
+    ])
+    return model
+
 
 
 
