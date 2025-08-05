@@ -23,3 +23,10 @@ def set_seeds(seed=42):
     np.random.seed(seed)
     tf.random.set_seed(seed)
     random.seed(seed)
+
+# Get base directory from environment variable or defaults
+BASE_DIR = os.environ.get("BREAST_CANCER_DATA", os.path.join(os.getcwd(), "data/input/BreakHis_v1/histology_slides/breast"))
+TRAIN_DIR = os.path.join(BASE_DIR, 'train')
+VAL_DIR = os.path.join(BASE_DIR, 'validation')
+CHECKPOINT_DIR = os.path.join(BASE_DIR, 'efficient_checkpoint')
+CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, 'best_model.h5')
