@@ -125,6 +125,11 @@ def get_callbacks(checkpoint_path):
     lr_callback = LearningRateScheduler(scheduler)
     return [checkpoint, early_stopping, reduce_lr, lr_callback]
 
+# compute class weights
+def get_class_weights(generator):
+    class_weights = compute_class_weight(class_weight='balanced', classes=np.unique(generator.classes), y=generator.classes)
+    return {i: class_weights[i] for i in range(len(class_weights))}
+
 
 
 
