@@ -125,10 +125,31 @@ def get_callbacks(checkpoint_path):
     lr_callback = LearningRateScheduler(scheduler)
     return [checkpoint, early_stopping, reduce_lr, lr_callback]
 
-# compute class weights
+# Compute class weights
 def get_class_weights(generator):
     class_weights = compute_class_weight(class_weight='balanced', classes=np.unique(generator.classes), y=generator.classes)
     return {i: class_weights[i] for i in range(len(class_weights))}
+
+# Training function
+def train_model():
+    set_seeds()
+    logging.info(f"Using data from : {BASE_DIR}")
+    train_gen, val_gen, test_gen = get_data_generators()
+    model = build_model()
+    if os.path.exists(CHECKPOINT_PATH):
+        logging.info("Loading weights from checkpoint...")
+        model.load_weights(CHECKPOINT_PATH)
+        model.compile(optimizer=Adam(learning_rate=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
+        class_weights = get_class_weights(train_gen)
+        callbacks = get_callbacks(CHECKPOINT_PATH)
+        history = model.fit(
+            train_gen,
+            validation_data=val_gen,
+            epochs=27,
+            class_weight=class_weights,
+            callbacks=callbacks
+        )
+        return model, history, val_gen, test_gen
 
 
 
