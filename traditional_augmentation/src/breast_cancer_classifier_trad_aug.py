@@ -1,8 +1,11 @@
 import os
 import logging
 import random
+from tabnanny import verbose
+
 import numpy as np
 import tensorflow as tf
+from fontTools.varLib.interpolatable import test_gen
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import EfficientNetB5
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout
@@ -150,6 +153,67 @@ def train_model():
             callbacks=callbacks
         )
         return model, history, val_gen, test_gen
+
+# Evaluation function
+def evaluate_model(model, val_gen, test_gen, history):
+    best_model = tf.keras.models.load_model(CHECKPOINT_PATH)
+    val_loss, val_acc = best_model.evaluate(val_gen, verbose=0)
+    test_loss, test_acc = best_model.evaluate(test_gen, verbose=0)
+    logging.info(f"Validation loss: {val_loss}, Validation accuracy: {val_acc * 100:.2f}%")
+    logging.info(f"Test loss: {test_loss}, Test Accuracy: {test_acc * 100:.2f}%")
+
+    # Predictions
+    test_steps = int(np.ceil(test_gen.samples / test_gen.batch_size))
+    y_pred = best_model.predict(test_gen, steps=test_steps, verbose=1)
+    y_pred_labels = (y_pred > 0.5).astype(int)
+    y_true = test_gen.classes[:len(y_pred_labels)]
+
+    # Confusion matrix
+    conf_matrix = confusion_matrix(y_true, y_pred_labels)
+    class_names = CLASSES
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+    plt.xlabel("Predicted Label")
+    plt.ylabel("True Label")
+    plt.title("Confusion Matrix - Test Set")
+    plt.tight_layout()
+    plt.savefig(os.path.join(PLOTS_DIR, "confusion_matrix.png"))
+    plt.close()
+
+    # Classification report
+    report = classification_report(y_true, y_pred_labels, target_names=class_names)
+    print(report)
+
+    # Plot accuracy
+    plt.figure(figsize=(10, 5))
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('Training and Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend(['Training Accuracy', 'Validation Accuracy'])
+    plt.tight_layout()
+    plt.savefig(os.path.join(PLOTS_DIR,  'accuracy.png'))
+    plt.close()
+
+    # Plot loss
+    plt.figure(figsize=(10, 5))
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend(['Training Loss', 'Validation Loss'])
+    plt.tight_layout()
+    plt.savefig(os.path.join(PLOTS_DIR, 'loss.png'))
+    plt.close()
+
+
+if __name__ == "__main__":
+    PLOTS_DIR = os.path.join(BASE_DIR, 'plots')
+    os.makedirs(PLOTS_DIR, exist_ok=True)
+    model, history, val_gen = train_model() # Train the model
+    evaluate_model(model, val_gen, test_gen, history) # Evaluate and plot results
 
 
 
