@@ -105,6 +105,26 @@ def build_model(dropout_rate=0.4):
     ])
     return model
 
+# Call backs
+def get_callbacks(checkpoint_path):
+    checkpoint = ModelCheckpoint(
+        filepath=checkpoint_path,
+        save_weights_only=False,
+        monitor='val_loss',
+        mode='min',
+        save_best_only=True,
+        verbose=1
+    )
+    early_stopping = EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=1e-6)
+    def scheduler(epoch, lr):
+        if epoch < 10:
+            return float(lr)
+        else:
+            return float(lr * tf.math.exp(-0.1))
+    lr_callback = LearningRateScheduler(scheduler)
+    return [checkpoint, early_stopping, reduce_lr, lr_callback]
+
 
 
 
