@@ -1,16 +1,35 @@
 import os
 import logging
 import random
-from tabnanny import verbose
 
 import numpy as np
 import tensorflow as tf
-from fontTools.varLib.interpolatable import test_gen
+
+# Configure TensorFlow for M1/M2 Macs
+if tf.config.list_physical_devices('GPU'):
+    try:
+        tf.config.experimental.set_memory_growth(tf.config.list_physical_devices('GPU')[0], True)
+    except:
+        pass
+
+# Disable some optimizations that can cause issues on M1/M2
+tf.config.optimizer.set_jit(False)
+tf.config.optimizer.set_experimental_options({
+    "layout_optimizer": False,
+    "constant_folding": False,
+    "shape_optimization": False,
+    "remapping": False,
+    "arithmetic_optimization": False,
+    "dependency_optimization": False,
+    "loop_optimization": False,
+    "function_optimization": False,
+    "debug_stripper": False,
+})
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import EfficientNetB5
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout
 from tensorflow.keras.models import Sequential
-from keras.optimizers.legacy import Adam
+from tensorflow.keras.optimizers.legacy import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler, ReduceLROnPlateau
 from sklearn.utils.class_weight import compute_class_weight
 import matplotlib.pyplot as plt
@@ -26,9 +45,9 @@ def set_seeds(seed=42):
     np.random.seed(seed)
     tf.random.set_seed(seed)
     random.seed(seed)
-
+# /Users/albertegi/Dev/gan-efficientnet-fusion-breast-cancer/data/input/BreaKHis_v1/histology_slides/breast
 # Get base directory from environment variable or defaults
-BASE_DIR = os.environ.get("BREAST_CANCER_DATA", os.path.join(os.getcwd(), "data/input/BreakHis_v1/histology_slides/breast"))
+BASE_DIR = os.environ.get("BREAST_CANCER_DATA", os.path.join(os.getcwd(), "data/processed"))
 TRAIN_DIR = os.path.join(BASE_DIR, 'train') # creates path to training data
 VAL_DIR = os.path.join(BASE_DIR, 'validation')
 CHECKPOINT_DIR = os.path.join(BASE_DIR, 'efficient_checkpoints')
@@ -102,7 +121,7 @@ def get_data_generators(seed=42):
 def build_model(dropout_rate=0.4):
     model = Sequential([
         EfficientNetB5(input_shape=(224, 224, 3), include_top=False, weights='imagenet'),
-        GlobalAveragePooling2D,
+        GlobalAveragePooling2D(),
         Dropout(dropout_rate),
         Dense(1, activation='sigmoid', kernel_regularizer=tf.keras.regularizers.l2(0.01))
     ])
@@ -139,20 +158,26 @@ def train_model():
     logging.info(f"Using data from : {BASE_DIR}")
     train_gen, val_gen, test_gen = get_data_generators()
     model = build_model()
+    
+    # Create checkpoint directory if it doesn't exist
+    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+    
+    model.compile(optimizer=Adam(learning_rate=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
+    class_weights = get_class_weights(train_gen)
+    callbacks = get_callbacks(CHECKPOINT_PATH)
+    
     if os.path.exists(CHECKPOINT_PATH):
         logging.info("Loading weights from checkpoint...")
         model.load_weights(CHECKPOINT_PATH)
-        model.compile(optimizer=Adam(learning_rate=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
-        class_weights = get_class_weights(train_gen)
-        callbacks = get_callbacks(CHECKPOINT_PATH)
-        history = model.fit(
-            train_gen,
-            validation_data=val_gen,
-            epochs=27,
-            class_weight=class_weights,
-            callbacks=callbacks
-        )
-        return model, history, val_gen, test_gen
+    
+    history = model.fit(
+        train_gen,
+        validation_data=val_gen,
+        epochs=27,
+        class_weight=class_weights,
+        callbacks=callbacks
+    )
+    return model, history, val_gen, test_gen
 
 # Evaluation function
 def evaluate_model(model, val_gen, test_gen, history):
@@ -212,11 +237,5 @@ def evaluate_model(model, val_gen, test_gen, history):
 if __name__ == "__main__":
     PLOTS_DIR = os.path.join(BASE_DIR, 'plots')
     os.makedirs(PLOTS_DIR, exist_ok=True)
-    model, history, val_gen = train_model() # Train the model
+    model, history, val_gen, test_gen = train_model() # Train the model
     evaluate_model(model, val_gen, test_gen, history) # Evaluate and plot results
-
-
-
-
-
-
